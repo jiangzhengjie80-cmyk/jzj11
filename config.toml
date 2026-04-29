@@ -1,0 +1,29 @@
+# Codex配置文件 - 修复流连接断开问题
+# 适用于Codex版本 0.125.0+
+
+# 使用新版Responses API（修复stream disconnected错误）
+wire_api = "responses"
+
+# 基础模型配置
+model = "gpt-4"
+
+# API提供商配置
+[model_providers.openai]
+# OpenAI API配置
+request_max_retries = 4
+stream_max_retries = 10
+stream_idle_timeout_ms = 30000
+
+# 流设置优化（解决连接断开问题）
+[stream]
+# 增加流超时时间
+idle_timeout_ms = 60000
+# 启用重试机制
+max_retries = 5
+
+# 网络连接设置
+[network]
+# 增加连接超时
+connection_timeout_ms = 30000
+# 启用keep-alive
+keep_alive = true

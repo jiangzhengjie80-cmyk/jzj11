@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090d14" />
+    <title>StreamTale</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">电影收藏系统</p>
+          <h1>Frank's Movielist</h1>
+        </div>
+        <div class="header-actions">
+          <button class="utility-button" id="refreshButton" type="button">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+            <span>刷新</span>
+          </button>
+          <button class="utility-button" id="posterButton" type="button">
+            <i data-lucide="download" aria-hidden="true"></i>
+            <span>下载封面</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="stats-grid" aria-label="收藏统计">
+        <article class="stat-panel">
+          <span class="stat-label">当前列表</span>
+          <strong id="totalCount">0</strong>
+        </article>
+        <article class="stat-panel">
+          <span class="stat-label">已看</span>
+          <strong id="watchedCount">0</strong>
+        </article>
+        <article class="stat-panel">
+          <span class="stat-label">完成度</span>
+          <strong id="progressCount">0%</strong>
+        </article>
+      </section>
+
+      <section class="spotlight-panel" id="spotlightPanel" aria-label="随机电影">
+        <div class="spotlight-poster" id="spotlightPoster"></div>
+        <div class="spotlight-copy">
+          <p class="spotlight-kicker" id="spotlightKicker">随机放映</p>
+          <h2 id="spotlightTitle">正在装片...</h2>
+          <p id="spotlightMeta"></p>
+          <div class="spotlight-actions">
+            <button class="utility-button" id="shuffleButton" type="button">
+              <i data-lucide="shuffle" aria-hidden="true"></i>
+              <span>换一部</span>
+            </button>
+            <button class="primary-button" id="spotlightWatchButton" type="button">标记已看</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <section class="library-panel" aria-label="个人收藏">
+          <div class="panel-heading">
+            <div>
+              <h2>个人收藏</h2>
+              <p id="sourceStatus" data-tone="muted" aria-live="polite">正在读取本地资料库...</p>
+            </div>
+          </div>
+
+          <div class="controls">
+            <label class="search-box">
+              <i data-lucide="search" aria-hidden="true"></i>
+              <input id="collectionSearch" type="search" placeholder="搜索收藏里的电影、导演或类型" autocomplete="off" />
+            </label>
+
+            <div class="segmented" id="statusFilters" role="group" aria-label="观看状态">
+              <button class="segment active" type="button" data-status="all">全部</button>
+              <button class="segment" type="button" data-status="watched">已看</button>
+              <button class="segment" type="button" data-status="unwatched">未看</button>
+            </div>
+          </div>
+
+          <div class="collection-mode-bar" id="collectionModeBar" hidden></div>
+          <section class="movie-grid" id="collectionGrid" aria-label="电影列表"></section>
+          <section class="empty-state" id="emptyState" hidden>
+            <i data-lucide="film" aria-hidden="true"></i>
+            <p>没有匹配的电影</p>
+          </section>
+        </section>
+
+        <aside class="source-panel" aria-label="外部添加">
+          <div class="panel-heading">
+            <div>
+              <h2>导演广场</h2>
+              <p>点击导演查看作品，一键保存资料和封面。</p>
+            </div>
+            <button class="utility-button compact-icon" id="plazaRefreshButton" type="button" title="随机刷新导演">
+              <i data-lucide="shuffle" aria-hidden="true"></i>
+              <span>随机</span>
+            </button>
+          </div>
+
+          <section class="director-plaza" id="directorPlaza" aria-label="推荐导演"></section>
+
+          <div class="source-search">
+            <label class="search-box">
+              <i data-lucide="user-search" aria-hidden="true"></i>
+              <input id="directorSearch" type="search" placeholder="搜索导演" autocomplete="off" />
+            </label>
+            <button class="primary-button" id="directorSearchButton" type="button">
+              <i data-lucide="search" aria-hidden="true"></i>
+              <span>搜索</span>
+            </button>
+          </div>
+
+          <div class="result-stack" id="directorResults"></div>
+          <div class="divider"></div>
+          <div class="film-toolbar">
+            <div>
+              <strong id="filmToolbarTitle">作品列表</strong>
+              <span id="filmToolbarMeta">选择导演后出现</span>
+            </div>
+            <button class="primary-button compact" id="addAllButton" type="button" disabled>一键添加</button>
+          </div>
+          <div class="result-stack film-stack" id="filmResults"></div>
+        </aside>
+      </section>
+    </main>
+
+    <dialog class="player-modal" id="playerModal">
+      <div class="player-container">
+        <button class="player-close" id="playerClose" type="button" aria-label="关闭播放器">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+        
+        <div class="player-header">
+          <h3 id="playerTitle">播放中</h3>
+          <span id="playerSubtitle"></span>
+        </div>
+
+        <div class="player-content">
+          <iframe id="videoPlayer" class="video-player" allowfullscreen></iframe>
+          
+          <div class="player-placeholder" id="playerPlaceholder" hidden>
+            <i data-lucide="film" aria-hidden="true"></i>
+            <p>正在跳转播放...</p>
+          </div>
+        </div>
+
+        <div class="player-controls">
+          <div class="progress-bar">
+            <div class="progress-track" id="progressTrack"></div>
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-buffer" id="progressBuffer"></div>
+            <div class="progress-thumb" id="progressThumb"></div>
+          </div>
+          
+          <div class="controls-bar">
+            <button class="control-btn" id="playPauseBtn" type="button" aria-label="播放/暂停">
+              <i data-lucide="play" aria-hidden="true"></i>
+            </button>
+            
+            <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+            
+            <button class="control-btn" id="volumeBtn" type="button" aria-label="音量控制">
+              <i data-lucide="volume-2" aria-hidden="true"></i>
+            </button>
+            <input class="volume-slider" id="volumeSlider" type="range" min="0" max="1" step="0.1" value="1" />
+            
+            <button class="control-btn" id="fullscreenBtn" type="button" aria-label="全屏">
+              <i data-lucide="maximize" aria-hidden="true"></i>
+            </button>
+            
+            <select class="quality-select" id="qualitySelect">
+              <option value="hd">高清</option>
+              <option value="sd">标清</option>
+              <option value="ld">流畅</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="player-error" id="playerError" hidden>
+          <i data-lucide="alert-circle" aria-hidden="true"></i>
+          <p>无法获取播放资源，请尝试其他影片</p>
+        </div>
+      </div>
+    </dialog>
+  </body>
+</html>
